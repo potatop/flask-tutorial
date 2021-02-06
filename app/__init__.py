@@ -15,9 +15,9 @@ celery.conf.update(
     broker_url = app.config["CELERY_BROKER_URL"],
     result_backend = app.config["CELERY_BROKER_URL"],
     beat_schedule = {
-        "runs-every-10-seconds": {
+        "microcenter-task": {
             "task": "app.tasks.microcenter",
-            "schedule": 10
+            "schedule": app.config["SCHEDULE"]
         }
     }
 )
