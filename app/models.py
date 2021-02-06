@@ -3,7 +3,7 @@ from app import db
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(128))
     instock = db.Column(db.Boolean())
     price = db.Column(db.Numeric())
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
