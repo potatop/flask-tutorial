@@ -36,9 +36,9 @@ def microcenter():
             logger.info("found product {}".format(a.text))
             id = int(a.get('data-id'))
             history = History.query.filter(History.id == id).order_by(History.timestamp.desc()).first()
+            t = elem.xpath('.//div[@class="stock"]/strong//text()')
+            status = False if t[1] == 'Sold Out' else True
             if history is None or history.instock != status:
-                t = elem.xpath('.//div[@class="stock"]/strong//text()')
-                status = False if t[1] == 'Sold Out' else True
                 history = History(id=id, name=a.text, instock=status, price=a.get('data-price'))
                 db.session.add(history)
                 db.session.commit()
