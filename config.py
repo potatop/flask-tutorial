@@ -5,3 +5,4 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     SCHEDULE = int(os.environ.get('TASK_SCHEDULE', 30))
+    TILL_URL = os.environ.get("TILL_URL")
