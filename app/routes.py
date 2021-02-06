@@ -21,4 +21,4 @@ def test_message():
         "phone": ["16157152079"],
         "text" : "test message!"
     })
-    return r
+    return ('', 204)
