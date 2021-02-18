@@ -1,52 +1,54 @@
 from lxml import html
-from app.models import History
-from app import app, db, celery
-from celery.utils.log import get_task_logger
+from app.models import Product, Price
+from app import db
 import requests
 
-logger = get_task_logger(__name__)
-
+RETAIL = {
+    "3070": 500,
+    "3080": 700,
+    "6800": 580,
+    "6800 XT": 650,
+}
 TARGET = "https://www.microcenter.com/search/search_results.aspx"
-AGENT = ('Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit'
-    '/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1')
 
-@celery.task
-def microcenter():
+def gfxcards():
     resp = requests.get(
         TARGET,
         params={
             "Ntk": "all",
             "sortby": "match",
-            "N": "4294966995 4294808559",
+            "N": "4294808485 4294808505 4294808740 4294808774",
             "myStore": "false",
         },
-        headers={"referer": "https://www.microcenter.com", "user-agent": AGENT},
+        headers={"referer": "https://www.microcenter.com"},
         timeout=25,
         cookies={
             "MicrocenterPrivacy": "Accepted",
             "SortBy": "match",
             "storeSelected": "065",
+            "rpp": "48",
         },
     )
+    products = {}
     if resp.status_code == 200:
         tree = html.fromstring(resp.content)
         list = tree.xpath('//article[@id="productGrid"]/ul/li/div[@class="result_right"]')
         for elem in list:
             a = elem.xpath('.//a')[0]
-            logger.info("found product {}".format(a.text))
-            id = int(a.get('data-id'))
-            history = History.query.filter(History.id == id).order_by(History.timestamp.desc()).first()
+            product = Product(id=a.get('data-id'), name=a.text)
             t = elem.xpath('.//div[@class="stock"]/strong//text()')
             status = False if t[1] == 'Sold Out' else True
-            if history is None or history.instock != status:
-                history = History(id=id, name=a.text, instock=status, price=a.get('data-price'))
-                db.session.add(history)
-                db.session.commit()
-                if "5900X" in history.name and history.instock:
-                    requests.post(app.config["TILL_URL"], json={
-                        "phone": ["16157152079"],
-                        "text" : "X5900 in stock!"
-                    })
-        return 0
-    else:
-        return resp.status_code
+            price = Price(instock=status, price=a.get('data-price'), product_id=product.id)
+            products[product] = price
+    return products
+
+def save():
+    products = gfxcards()
+    for k, v in products.items():
+        if Product.query.filter(Product.id == k.id).first() is None:
+            db.session.add(k)
+        for kk, vv in RETAIL.items():
+            if kk in k.name:
+                v.premium = (float(v.price) - vv) / vv
+        db.session.add(v)
+    db.session.commit()

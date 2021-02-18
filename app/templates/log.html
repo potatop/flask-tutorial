@@ -17,13 +17,15 @@
                 <th>Timestamp</th>
                 <th>Name</th>
                 <th>Price</th>
+                <th>Premium</th>
                 <th>InStock</th>
             </tr>
-            {% for item in posts %}
+            {% for item in items %}
             <tr>
                 <td>{{ item.timestamp }}</td>
-                <td>{{ item.name }}</td>
+                <td>{{ item.product.name }}</td>
                 <td>{{ item.price }}</td>
+                <td>{{ "%.1f%%"|format(item.premium * 100) }}</td>
                 <td>{{ item.instock }}</td>
             </tr>
             {% endfor %}

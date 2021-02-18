@@ -14,12 +14,12 @@ celery = Celery(app.name)
 celery.conf.update(
     broker_url = app.config["CELERY_BROKER_URL"],
     result_backend = app.config["CELERY_BROKER_URL"],
-    beat_schedule = {
-        "microcenter-task": {
-            "task": "app.tasks.microcenter",
-            "schedule": app.config["SCHEDULE"]
-        }
-    }
+    # beat_schedule = {
+    #     "microcenter-task": {
+    #         "task": "app.tasks.microcenter",
+    #         "schedule": app.config["SCHEDULE"]
+    #     }
+    # }
 )
 
 from app import routes, models, tasks

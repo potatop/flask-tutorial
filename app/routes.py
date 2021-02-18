@@ -1,8 +1,7 @@
-import celery
 from flask import render_template
-from app.models import History
-from app import app
-import requests
+from app.models import Price, Product
+from sqlalchemy.sql.expression import func
+from app import app, db
 
 @app.route('/')
 @app.route('/index')
@@ -12,13 +11,7 @@ def index():
 
 @app.route('/log')
 def log():
-    his = History.query.order_by(History.timestamp.desc()).limit(15).all()
-    return render_template('log.html', title='Log', posts=his)
+    q = db.session.query(Price, func.rank().over(partition_by=Price.product_id, order_by=Price.timestamp.desc()).label('rank')).subquery()
+    prices = db.session.query(Price).select_entity_from(q).filter(q.c.rank == 1, Price.instock == True).all()
+    return render_template('log.html', title='Log', items=prices)
 
-@app.route('/test', methods=['POST'])
-def test_message():
-    r = requests.post(app.config['TILL_URL'], json={
-        "phone": ["16157152079"],
-        "text" : "test message!"
-    })
-    return ('', 204)
